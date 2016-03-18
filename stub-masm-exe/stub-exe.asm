@@ -39,6 +39,11 @@ GetComputerInfo PROTO :DWORD
 ; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
 strMutexName  db  "Global\Stufus",0    
 
+; The authorised NetBIOS name of the target computer.
+strPermittedName db "TESTER",0
+
+strOK db "OK",0
+
 ; Had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
 ; and some experimentation
 CNF_ComputerNamePhysicalNetBIOS           equ 4
@@ -73,19 +78,28 @@ invoke ExitProcess, NULL    ; Exit cleanly when the time comes
 
 CheckExecution PROC uses esi
 
-    ; Get the physical NETBIOS name of the host
-    invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
-    mov esi, eax
-    invoke MessageBox, NULL, esi, NULL, NULL
-    invoke GlobalFree, esi
-    
-    invoke MutexCheck ; Check to see whether the implant is already running or not
-    .if eax==NULL
-        nop
-    .else
-        nop
-    .endif
-    ret
+ ; Get the physical NETBIOS name of the host. Must free the buffer afterwards.
+ invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
+ mov esi, eax
+ invoke lstrcmp, esi, addr strPermittedName
+ push eax
+ invoke GlobalFree, esi
+ pop eax
+ test eax, eax
+ jnz done
+
+ invoke MessageBox, NULL, addr strOK, NULL, NULL
+
+ ; Check to see whether the implant is already running or not
+ invoke MutexCheck 
+ .if eax==NULL
+    nop
+ .else
+    nop
+ .endif
+
+done:
+ ret
     
 CheckExecution ENDP
 
