@@ -12,16 +12,23 @@
 .model flat,stdcall
 option casemap:none
 
+; -----------------------------------------------------------------------------
+; These includes are needed for the compiler and linker
+; -----------------------------------------------------------------------------
+
 include \masm32\include\windows.inc
 include \masm32\include\user32.inc
-
 include \masm32\include\kernel32.inc
-
 includelib \masm32\lib\kernel32.lib
 includelib \masm32\lib\user32.lib           
 
-MutexCheck PROTO 
-RunIfNotAlreadyRunning PROTO
+; -----------------------------------------------------------------------------
+; MASM works by single-pass, so all functions need to be declared
+; in advance so that the lexcial analyser will work properly
+; -----------------------------------------------------------------------------
+
+CheckExecution PROTO 
+MutexCheck PROTO
 
 .data                              
 
@@ -32,17 +39,15 @@ RunIfNotAlreadyRunning PROTO
   shellcode db 90h,90h
   
 .data?            
-
 .code 
-
 stufus:
 
 ; -----------------------------------------------------------------------------
 ; Entry point
 ; -----------------------------------------------------------------------------
  
-invoke CheckExecution
-invoke ExitProcess, NULL
+invoke CheckExecution       ; This does the main work
+invoke ExitProcess, NULL    ; Exit cleanly when the time comes
 
 
 
@@ -56,8 +61,7 @@ invoke ExitProcess, NULL
 
 CheckExecution PROC
 
-    ; Check to see whether the implant is already running or not
-    invoke MutexCheck
+    invoke MutexCheck ; Check to see whether the implant is already running or not
     .if eax==NULL
         invoke MessageBox, NULL, addr strNo, NULL, NULL
     .else
