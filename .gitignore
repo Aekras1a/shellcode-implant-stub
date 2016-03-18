@@ -39,6 +39,11 @@ TestResult.xml
 [Rr]eleasePS/
 dlldata.c
 
+# Executables
+*.exe
+*.dll
+*.lib
+
 # DNX
 project.lock.json
 artifacts/
