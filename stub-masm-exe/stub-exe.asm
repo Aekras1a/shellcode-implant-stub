@@ -29,6 +29,8 @@ includelib \masm32\lib\user32.lib
 
 CheckExecution PROTO 
 MutexCheck PROTO
+GetComputerInfo PROTO :DWORD
+
 
 .data                              
 
@@ -36,9 +38,17 @@ MutexCheck PROTO
   strYesRun db "Yes, run",0
   strNo db "No, already running",0
 
+  ; Had to work this out from https://msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
+  ; and some experimentation
+  CNF_ComputerNamePhysicalNetBIOS           equ 4
+  CNF_ComputerNamePhysicalDnsHostname       equ 5
+  CNF_ComputerNamePhysicalDnsDomain         equ 6
+  CNF_ComputerNamePhysicalDnsFullyQualified equ 7
+
   shellcode db 90h,90h
   
-.data?            
+.data?
+            
 .code 
 stufus:
 
@@ -59,8 +69,14 @@ invoke ExitProcess, NULL    ; Exit cleanly when the time comes
 ; 
 ; -----------------------------------------------------------------------------
 
-CheckExecution PROC
+CheckExecution PROC uses esi
 
+    ; Get the physical NETBIOS name of the host
+    invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
+    mov esi, eax
+    invoke MessageBox, NULL, esi, NULL, NULL
+    invoke GlobalFree, esi
+    
     invoke MutexCheck ; Check to see whether the implant is already running or not
     .if eax==NULL
         invoke MessageBox, NULL, addr strNo, NULL, NULL
@@ -68,7 +84,34 @@ CheckExecution PROC
         invoke MessageBox, NULL, addr strYesRun, NULL, NULL
     .endif
     ret
+    
 CheckExecution ENDP
+
+
+; -----------------------------------------------------------------------------
+; 
+;  GetComputerInfo
+;  This function retrieves information about the computer (e.g. its name)
+;  and returns a buffer to it. Caller needs to free it when done.
+; 
+; -----------------------------------------------------------------------------
+
+GetComputerInfo PROC uses esi reqinfo:DWORD
+LOCAL lsize:DWORD
+    mov lsize, 0
+    invoke GetComputerNameEx, reqinfo, NULL, addr lsize ; Find out how large this string actually is
+    inc lsize
+    invoke GlobalAlloc, GPTR, lsize                     ; Allocate the memory needed to store the name
+    test eax, eax                                       ; Make sure the function worked
+    jz done
+    mov esi, eax
+    invoke GetComputerNameEx, reqinfo, esi, addr lsize  ; Actually retrieve it
+    test eax, eax
+    jz done
+    mov eax, esi 
+done:
+    ret
+GetComputerInfo ENDP
 
 
 
