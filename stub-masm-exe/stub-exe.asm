@@ -13,7 +13,7 @@
 option casemap:none
 
 ; -----------------------------------------------------------------------------
-; These includes are needed for the compiler and linker
+;  These includes are needed for the compiler and linker
 ; -----------------------------------------------------------------------------
 
 include \masm32\include\windows.inc
@@ -23,8 +23,8 @@ includelib \masm32\lib\kernel32.lib
 includelib \masm32\lib\user32.lib           
 
 ; -----------------------------------------------------------------------------
-; MASM works by single-pass, so all functions need to be declared
-; in advance so that the lexcial analyser will work properly
+;  MASM works by single-pass, so all functions need to be declared
+;  in advance so that the lexcial analyser will work properly
 ; -----------------------------------------------------------------------------
 
 CheckExecution PROTO 
@@ -43,7 +43,7 @@ MutexCheck PROTO
 stufus:
 
 ; -----------------------------------------------------------------------------
-; Entry point
+;  Entry point
 ; -----------------------------------------------------------------------------
  
 invoke CheckExecution       ; This does the main work
