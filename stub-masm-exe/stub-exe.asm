@@ -1,10 +1,12 @@
 ; -----------------------------------------------------------------------------
 ; 
-;  Implant Stub Code
+;  Implant Stub Code - MASM EXE
 ;  (C) Stuart Morgan (@ukstufus) <stuart.morgan@mwrinfosecurity.com>
 ;
 ;  This code is designed to act as a basis for safer implants during simulated
 ;  attacks. 
+;
+;  Compile this by running 'makeit.bat' from the same drive as a masm32 installation.
 ; 
 ; -----------------------------------------------------------------------------
 
@@ -32,19 +34,20 @@ MutexCheck PROTO
 GetComputerInfo PROTO :DWORD
 
 
-.data                              
-  ; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
-  strMutexName  db  "Global\Stufus",0    
+.data         
+                     
+; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
+strMutexName  db  "Global\Stufus",0    
 
-  ; Had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
-  ; and some experimentation
-  CNF_ComputerNamePhysicalNetBIOS           equ 4
-  CNF_ComputerNamePhysicalDnsHostname       equ 5
-  CNF_ComputerNamePhysicalDnsDomain         equ 6
-  CNF_ComputerNamePhysicalDnsFullyQualified equ 7
+; Had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
+; and some experimentation
+CNF_ComputerNamePhysicalNetBIOS           equ 4
+CNF_ComputerNamePhysicalDnsHostname       equ 5
+CNF_ComputerNamePhysicalDnsDomain         equ 6
+CNF_ComputerNamePhysicalDnsFullyQualified equ 7
 
-  ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
-  shellcode db 90h,90h
+; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
+shellcode db 90h,90h
   
 .data?
             
@@ -85,6 +88,7 @@ CheckExecution PROC uses esi
     ret
     
 CheckExecution ENDP
+
 
 
 ; -----------------------------------------------------------------------------
