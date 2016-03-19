@@ -17,19 +17,34 @@ import argparse
 def writeout(varname, data, xorval, xorsize, fmt):
     hash_counter = 0
     shellcode_counter = 0
-    sys.stdout.write(varname+" db ")
+
+    if fmt=='MASM':
+        sys.stdout.write(varname+" db ")
+    elif fmt=='C':
+        sys.stdout.write("unsigned char "+varname+"[] =\n  \"\\x")
+
     for c in data:
         if shellcode_counter % 20:
-            sys.stdout.write(',')
+            if fmt=='MASM':
+                sys.stdout.write(',')
+            elif fmt=='C':
+                sys.stdout.write('\\x')
         elif shellcode_counter:
-            sys.stdout.write("\n" + " "*len(varname) + " db ")
+            if fmt=='MASM':
+                sys.stdout.write("\n" + " "*len(varname) + " db ")
+            elif fmt=='C':
+                sys.stdout.write("\"\n  \"\\x")
     
         if xorval != None:
             original_opcode = c
             new_opcode = ord(c) ^ ord(xorval[hash_counter])
         else:
             new_opcode = ord(c)
-        sys.stdout.write(str(new_opcode))
+
+        if fmt=='MASM':
+            sys.stdout.write(str(new_opcode))
+        elif fmt=='C':
+            sys.stdout.write(c.encode('hex'))
     
         shellcode_counter += 1
 
@@ -39,8 +54,14 @@ def writeout(varname, data, xorval, xorsize, fmt):
             else:
                 hash_counter = hash_counter + 1
 
+    if fmt=='C':
+        sys.stdout.write("\";")
     sys.stdout.write("\n")
-    sys.stdout.write(varname+"len  equ  "+str(shellcode_counter)+"\n")
+    if fmt=='MASM':
+        sys.stdout.write(varname+"len  equ  "+str(shellcode_counter)+"\n")
+    elif fmt=='C':
+        sys.stdout.write("#define "+varname+"len "+str(shellcode_counter)+"\n")
+
     sys.stdout.write("\n")
 
 def generate_computername_hash(computername, outformat):
