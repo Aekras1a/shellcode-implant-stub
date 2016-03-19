@@ -21,7 +21,7 @@ def writeout(varname, data, xorval, xorsize, fmt):
     if fmt=='MASM':
         sys.stdout.write(varname+" db ")
     elif fmt=='C':
-        sys.stdout.write("unsigned char "+varname+"[] =\n  \"\\x")
+        sys.stdout.write("unsigned BYTE "+varname+"[] =\n  \"\\x")
 
     for c in data:
         if shellcode_counter % 20:

