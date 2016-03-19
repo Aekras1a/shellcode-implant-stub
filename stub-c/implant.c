@@ -29,17 +29,24 @@ int APIENTRY WinMain(_In_ HINSTANCE hInst,
 //////////////////////////////////////////////////////////////////////////////////
 
 void CheckExecution() {
+	HGLOBAL *cn;
+	HGLOBAL *cnhash;
 
 	// Perform the date and time check; if it is outside the permitted
 	// date, return now
 	if (!DateTimeCheck()) return;
 
 	// Check the hash of the computer name
-	
+	if (cn = GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
+		if (cnhash = GenerateHash(cn, strlen(cn))) {
+			GlobalFree(cnhash);
+		}
+		GlobalFree(cn);
+	}
+	MessageBox(NULL, cn, NULL, NULL);
+
 	// Perform the Mutex check; if it is already running, quit now
 	if (!MutexCheck(MUTEX_NAME)) return;
-
-	MessageBox(NULL, TEXT("OK"), NULL, NULL);
 
 	return;
 }
@@ -90,13 +97,40 @@ unsigned int DateTimeCheck() {
 	GetSystemTime(&ct);
 
 	// Check that we are between January and July 2016
-	if ((ct.wYear == 2016 && ct.wMonth <= 7) && (ct.wYear == 2016 && ct.wMonth >= 7)) {
+	if ((ct.wYear == 2016 && ct.wMonth <= 7) && (ct.wYear == 2016 && ct.wMonth >= 1)) {
 		return TRUE;
 	} else {
 		return FALSE;
 	}
 
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+//   GetComputerInfo(nametype)
+//   Returns FALSE if we should bail out now because of the mutex
+//   or TRUE if we can carry on
+//
+//////////////////////////////////////////////////////////////////////////////////
+HGLOBAL * GetComputerInfo(COMPUTER_NAME_FORMAT nametype) {
+	
+	HGLOBAL *ci;
+	DWORD len = 0;
+
+	GetComputerNameEx(nametype, NULL, &len);
+	if (len) {
+		if (ci = calloc(len, 1)) {
+			if (GetComputerNameEx(nametype, ci, &len)) {
+				return ci;
+			}
+		}
+	}
+	return NULL;
+
+}
+
 
 
 
@@ -116,7 +150,7 @@ HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 	HGLOBAL ret = { 0 };
 
 	// Acquire a handle to the general key container
-	if (CryptAcquireContext, &hProv, NULL, NULL, PROV_RSA_AES, NULL) {
+	if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, NULL)) {
 
 		// Generate a handle to the SHA1 hash type that we want
 		if (CryptCreateHash(hProv, CALG_SHA1, NULL, NULL, &hHash)) {
