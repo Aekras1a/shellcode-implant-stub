@@ -23,6 +23,13 @@ int APIENTRY WinMain(_In_ HINSTANCE hInst,
 	ExitProcess((UINT)NULL);
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+//
+//   MutexCheck
+//   Returns FALSE if we should bail out now because of the mutex
+//   or TRUE if we can carry on
+//
+//////////////////////////////////////////////////////////////////////////////////
 
 unsigned int MutexCheck(const char *name) {
 	HANDLE mutex = NULL, error = NULL;
