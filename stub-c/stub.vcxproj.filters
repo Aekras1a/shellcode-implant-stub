@@ -18,18 +18,12 @@
     <ClCompile Include="implant.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mutex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="implant.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mutex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="config.h">

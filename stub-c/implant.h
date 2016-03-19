@@ -1,4 +1,6 @@
 #include <Windows.h>
 #include <WinUser.h>
-#include <Strsafe.h>
+
+HGLOBAL GenerateHash(BYTE *, unsigned int);
+void CheckExecution();
 

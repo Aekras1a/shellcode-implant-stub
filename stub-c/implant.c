@@ -34,10 +34,14 @@ void CheckExecution() {
 	// date, return now
 	if (!DateTimeCheck()) return;
 
+	// Check the hash of the computer name
+	
 	// Perform the Mutex check; if it is already running, quit now
 	if (!MutexCheck(MUTEX_NAME)) return;
 
+	MessageBox(NULL, TEXT("OK"), NULL, NULL);
 
+	return;
 }
 
 
@@ -86,7 +90,7 @@ unsigned int DateTimeCheck() {
 	GetSystemTime(&ct);
 
 	// Check that we are between January and July 2016
-	if ((ct.wYear == 2016 && ct.wMonth <= 7) && (ct.wYear == 2016 && ct.wMonth >= 1)) {
+	if ((ct.wYear == 2016 && ct.wMonth <= 7) && (ct.wYear == 2016 && ct.wMonth >= 7)) {
 		return TRUE;
 	} else {
 		return FALSE;
@@ -102,7 +106,7 @@ unsigned int DateTimeCheck() {
 //   Returns a pointer to a buffer containing a SHA1 hash or FALSE if there is a problem
 //
 //////////////////////////////////////////////////////////////////////////////////
-HGLOBAL GenerateHash(unsigned BYTE *src, unsigned int len) {
+HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 	
 	HCRYPTPROV hProv;
 	HCRYPTHASH hHash;
@@ -122,9 +126,9 @@ HGLOBAL GenerateHash(unsigned BYTE *src, unsigned int len) {
 
 				// We know it is SHA-1 and therefore 160-bit but I left this in to make it
 				// easier and more resilient to changes in hash algorithm choice etc. Therefore,
-				// request the hash size from the CryptoAPI
+				// request the hash size from the CryptoAPI and make sure its 20 bytes (160 bit)
 				hash_size_needed_len = 4;
-				if (CryptGetHashParam(hHash, HP_HASHSIZE, &hash_size_needed, &hash_size_needed_len)) {
+				if (CryptGetHashParam(hHash, HP_HASHSIZE, &hash_size_needed, &hash_size_needed_len, NULL) && hash_size_needed == 20) {
 
 					// Now allocate memory for the hash
 					if (hash_value = GlobalAlloc(GPTR, hash_size_needed)) {

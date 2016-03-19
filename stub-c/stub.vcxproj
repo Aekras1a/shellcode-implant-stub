@@ -122,12 +122,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="implant.c" />
-    <ClCompile Include="mutex.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
     <ClInclude Include="implant.h" />
-    <ClInclude Include="mutex.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
