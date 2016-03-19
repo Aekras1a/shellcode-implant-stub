@@ -47,9 +47,16 @@ def generate_computername_hash(computername, outformat):
     computernamehash = hashlib.sha1()
     computernamehash.update(computername)
     computernamehash_value = computernamehash.digest()
-    sys.stdout.write("# This is the hash of: "+computername+"\n")
+    comment_character(outformat, "This is the hash of: "+computername+"\n")
     writeout("hashSHA1ComputerName", computernamehash_value, None, None, outformat)
 
+def comment_character(outformat,text):
+    if outformat == 'MASM':
+        sys.stdout.write("; "+text)
+    elif outformat == 'C':
+        sys.stdout.write("// "+text)
+    return
+ 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Shellcode to C/ASM implant stub converter.')
     parser.add_argument('-c', '--computername', action='store', help='Generate the SHA1 hash of the parameter given (e.g. a computer name)')
@@ -74,7 +81,7 @@ if __name__ == '__main__':
         with open(args['shellcode'], 'rb') as s:
             shellcode = s.read()
             s.close()
-        sys.stdout.write("# Shellcode loaded from: "+args['shellcode']+"\n")
+        comment_character(outformat, "Shellcode loaded from: "+args['shellcode']+"\n")
 
         xor = None
         xorsize = None
@@ -83,6 +90,6 @@ if __name__ == '__main__':
             domain_xor.update(args['xor'])
             xor = domain_xor.digest()
             xorsize = domain_xor.digest_size
-            sys.stdout.write("# Shellcode XOR'd with hash of: "+args['xor']+"\n")
+            comment_character(outformat, "Shellcode XOR'd with hash of: "+args['xor']+"\n")
 
         writeout('shellcode', shellcode, xor, xorsize, args['outputformat'])
