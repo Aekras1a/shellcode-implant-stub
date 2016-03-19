@@ -39,11 +39,16 @@ void CheckExecution() {
 	// Check the hash of the computer name
 	if (cn = GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
 		if (cnhash = GenerateHash(cn, strlen(cn))) {
-			GlobalFree(cnhash);
+			if (!memcmp(cnhash, &hashSHA1ComputerName, hashSHA1ComputerNamelen)) {
+				MessageBox(NULL, TEXT("They match"), NULL, NULL);
+			} else {
+				MessageBox(NULL, TEXT("They are different"), NULL, NULL);
+			}
+			free(cnhash);
 		}
-		GlobalFree(cn);
+		free(cn);
 	}
-	MessageBox(NULL, cn, NULL, NULL);
+	
 
 	// Perform the Mutex check; if it is already running, quit now
 	if (!MutexCheck(MUTEX_NAME)) return;
@@ -165,7 +170,7 @@ HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 				if (CryptGetHashParam(hHash, HP_HASHSIZE, &hash_size_needed, &hash_size_needed_len, NULL) && hash_size_needed == 20) {
 
 					// Now allocate memory for the hash
-					if (hash_value = GlobalAlloc(GPTR, hash_size_needed)) {
+					if (hash_value = calloc(hash_size_needed, 1)) {
 
 						if (CryptGetHashParam(hHash, HP_HASHVAL, hash_value, &hash_size_needed, NULL)) {
 							ret = hash_value;
