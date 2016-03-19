@@ -81,7 +81,7 @@ if __name__ == '__main__':
         with open(args['shellcode'], 'rb') as s:
             shellcode = s.read()
             s.close()
-        comment_character(outformat, "Shellcode loaded from: "+args['shellcode']+"\n")
+        comment_character(args['outputformat'], "Shellcode loaded from: "+args['shellcode']+"\n")
 
         xor = None
         xorsize = None
@@ -90,6 +90,6 @@ if __name__ == '__main__':
             domain_xor.update(args['xor'])
             xor = domain_xor.digest()
             xorsize = domain_xor.digest_size
-            comment_character(outformat, "Shellcode XOR'd with hash of: "+args['xor']+"\n")
+            comment_character(args['outputformat'], "Shellcode XOR'd with hash of: "+args['xor']+"\n")
 
         writeout('shellcode', shellcode, xor, xorsize, args['outputformat'])
