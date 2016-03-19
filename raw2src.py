@@ -25,29 +25,29 @@ with open('shellcode.raw', 'rb') as s:
     s.close()
 
 def writeout(varname, data, xorval, fmt):
-	hash_counter = 0
-	shellcode_counter = 0
-	sys.stdout.write(varname+" db ")
-	for c in shellcode:
-	    if shellcode_counter % 20:
-	        sys.stdout.write(',')
-	    elif shellcode_counter:
-	        sys.stdout.write("\n" + " "*varname.length() + "db ")
-	
+    hash_counter = 0
+    shellcode_counter = 0
+    sys.stdout.write(varname+" db ")
+    for c in shellcode:
+        if shellcode_counter % 20:
+            sys.stdout.write(',')
+        elif shellcode_counter:
+            sys.stdout.write("\n" + " "*varname.length() + "db ")
+    
         if xorval != None:
-	        original_opcode = c
-	        new_opcode = ord(c) ^ ord(domainhash_value[hash_counter])
+            original_opcode = c
+            new_opcode = ord(c) ^ ord(domainhash_value[hash_counter])
         else:
             new_opcode = ord(c)
-	    sys.stdout.write(str(new_opcode))
-	
-	    shellcode_counter += 1
+        sys.stdout.write(str(new_opcode))
+    
+        shellcode_counter += 1
 
         if xorval != None:
-		    if hash_counter==domainhash_size - 1:
-		        hash_counter = 0
-		    else:
-		        hash_counter = hash_counter + 1
+            if hash_counter==domainhash_size - 1:
+                hash_counter = 0
+            else:
+                hash_counter = hash_counter + 1
 
     sys.stdout.write("\n")
     sys.stdout.write("shellcodelen  equ  "+str(shellcode_counter)+"\n")
