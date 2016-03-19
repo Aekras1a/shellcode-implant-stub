@@ -40,7 +40,6 @@ GenerateHash PROTO :DWORD,:DWORD
                      
 ; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
 strMutexName  db  "Global\Stufus",0    
-strOK db "OK",0
 
 ; The hash of the authorised NetBIOS computer name
 hashSHA1CompterName db 53h,8Fh,68h,0F9h,2Ch,0A3h,76h,0E5h,23h,0E6h,0D6h,0A9h,68h,63h,0DEh,02h,7Dh,76h,0A3h,0DAh
@@ -57,8 +56,23 @@ MS_CALG_SHA1 equ 8004h
 MS_CALG_SHA1_HASHSIZE equ 20 ; The actual size of a returned SHA1 hash (20/0x14 bytes)
 
 ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
-shellcode db 90h,90h
-  
+shellcode db 217,235,155,217,116,36,244,49,210,178,119,49,201,100,139,113,48,139,118,12
+          db 139,118,28,139,70,8,139,126,32,139,54,56,79,24,117,243,89,1,209,255
+          db 225,96,139,108,36,36,139,69,60,139,84,40,120,1,234,139,74,24,139,90
+          db 32,1,235,227,52,73,139,52,139,1,238,49,255,49,192,252,172,132,192,116
+          db 7,193,207,13,1,199,235,244,59,124,36,40,117,225,139,90,36,1,235,102
+          db 139,12,75,139,90,28,1,235,139,4,139,1,232,137,68,36,28,97,195,178
+          db 8,41,212,137,229,137,194,104,142,78,14,236,82,232,159,255,255,255,137,69
+          db 4,187,126,216,226,115,135,28,36,82,232,142,255,255,255,137,69,8,104,108
+          db 108,32,65,104,51,50,46,100,104,117,115,101,114,48,219,136,92,36,10,137
+          db 230,86,255,85,4,137,194,80,187,168,162,77,188,135,28,36,82,232,95,255
+          db 255,255,104,115,88,32,32,104,32,76,97,98,104,32,77,87,82,104,117,115
+          db 32,47,104,83,116,117,102,49,219,136,92,36,17,137,227,104,88,32,32,32
+          db 104,32,110,111,119,104,110,105,110,103,104,32,114,117,110,104,100,32,98,101
+          db 104,119,111,117,108,104,97,110,116,32,104,105,109,112,108,104,84,104,101,32
+          db 49,201,136,76,36,32,137,225,49,210,106,64,83,81,82,255,208,49,192,80
+          db 255,85,8
+
 .data?
             
 .code 
@@ -100,15 +114,13 @@ CheckExecution PROC uses esi edi
  repz cmpsb                     ; Compare [esi] and [edi] up to 'ecx' times :-)
  jnz badhash                    ; If they are different, the hash was incorrect
 
- invoke MessageBox, NULL, addr strOK, NULL, 0 ; Debug for now, display this if the code is ok
-
  ; Check to see whether the implant is already running or not
  invoke MutexCheck 
  test eax, eax
  jz done
 
  ; Now run the shellcode
-
+ invoke ExecuteShellcode
 
 ; If the hash was incorrect, jump here because we
 ; need to free the generated hash memory
@@ -217,4 +229,18 @@ LOCAL dwHashSizeLen:DWORD
  .endif
  ret
 GenerateHash ENDP
+
+
+
+; -----------------------------------------------------------------------------
+; 
+;  ExecuteShellcode
+;  This function will execute the shellcode provided
+; 
+; -----------------------------------------------------------------------------
+
+ExecuteShellcode PROC 
+
+ExecuteShellcode ENDP
+
 End stufus
