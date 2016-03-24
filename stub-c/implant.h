@@ -2,7 +2,8 @@
 #include <WinUser.h>
 
 HGLOBAL GenerateHash(BYTE *, unsigned int);
-HGLOBAL * GetComputerInfo(COMPUTER_NAME_FORMAT nametype);
+HGLOBAL * GetComputerInfo(COMPUTER_NAME_FORMAT);
 void CheckExecution();
 unsigned int HashCheck();
-
+void DecodeShellcode();
+void ExecuteShellcode(BYTE *, unsigned int);

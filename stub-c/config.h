@@ -1,5 +1,6 @@
 #define WITH_MUTEX_CHECK
 #define MUTEX_NAME TEXT("Global\\Stufus")
+#define HASH_LEN 20
 
 // This is the hash of: TESTER
 BYTE hashSHA1ComputerName[] = "\x53\x8f\x68\xf9\x2c\xa3\x76\xe5\x23\xe6\xd6\xa9\x68\x63\xde\x02\x7d\x76\xa3\xda";
