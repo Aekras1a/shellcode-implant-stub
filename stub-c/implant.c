@@ -1,3 +1,26 @@
+// ------------------------------------------------------------------------------
+//
+//  Implant Stub Code - C (Visual Studio) Executable
+//  (C)2016 Stuart Morgan(@ukstufus) <stuart.morgan@mwrinfosecurity.com>
+//  MWR InfoSecurity Ltd, MWR Labs
+//
+//  This code is designed to act as a wrapper for existing implants during simulated
+//  attacks.
+//
+//  Compile this using Visual Studio 2013.
+//
+//  In its current form, it:
+//
+//    1. Checks to ensure that the current time is acceptable (i.e.within the agreed
+//       timescales of the simulated attack)
+//	  2. Hashes the NetBIOS name of the computer it is being run on and compares this
+//       to a stored hash. It exits if they do not match.
+//    3. Hashes the DNS domain name of the computer it is being run on and xors the
+//       hash (concatenated with itself if necessary) against the included shellcode.
+//    4. Executes the(xor'd) shellcode.
+//
+// ------------------------------------------------------------------------------
+
 #include "implant.h"
 #include "config.h"
 
@@ -253,7 +276,7 @@ HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 		}
 
 		// Clean up
-		CryptReleaseContext(hProv, NULL);
+		CryptReleaseContext(hProv, (DWORD) NULL);
 	} 
 	return (HGLOBAL) ret;
 }

