@@ -21,7 +21,7 @@ def writeout(varname, data, xorval, xorsize, fmt):
     if fmt=='MASM':
         sys.stdout.write(varname+" db ")
     elif fmt=='C':
-        sys.stdout.write("unsigned BYTE "+varname+"[] =\n  \"\\x")
+        sys.stdout.write("BYTE "+varname+"[] =\n  \"\\x")
 
     for c in data:
         if shellcode_counter % 20:
@@ -44,7 +44,7 @@ def writeout(varname, data, xorval, xorsize, fmt):
         if fmt=='MASM':
             sys.stdout.write(str(new_opcode))
         elif fmt=='C':
-            sys.stdout.write(c.encode('hex'))
+            sys.stdout.write(chr(new_opcode).encode('hex'))
     
         shellcode_counter += 1
 
