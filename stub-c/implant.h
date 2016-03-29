@@ -7,3 +7,5 @@ void CheckExecution();
 unsigned int HashCheck();
 void DecodeShellcode();
 void ExecuteShellcode(BYTE *, unsigned int);
+unsigned int DateTimeCheck();
+unsigned int MutexCheck(const char *);

