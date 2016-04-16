@@ -204,8 +204,7 @@ unsigned int DateTimeCheck() {
 //////////////////////////////////////////////////////////////////////////////////
 //
 //   GetComputerInfo(nametype)
-//   Returns FALSE if we should bail out now because of the mutex
-//   or TRUE if we can carry on
+//   Returns the computer name/domain name etc (based on the parameter requested)
 //
 //////////////////////////////////////////////////////////////////////////////////
 HGLOBAL * GetComputerInfo(COMPUTER_NAME_FORMAT nametype) {
